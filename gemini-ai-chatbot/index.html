@@ -1,0 +1,222 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CodersHub</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Prism.js for syntax highlighting -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+
+    <style>
+        /* Container for messages */
+        #output-container {
+            width: 50%;
+            max-height: 80vh;
+            overflow-y: auto;
+            margin-bottom: 100px;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+
+        /* Hide scrollbar for WebKit browsers */
+        #output-container::-webkit-scrollbar {
+            display: none;
+        }
+
+        /* Message box */
+        .message-box {
+            background-color: #1f2937;
+            color: white;
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            position: relative;
+        }
+
+        /* Ensure proper code formatting */
+        pre {
+            background-color: #1f2937;
+            padding: 10px;
+            border-radius: 8px;
+            overflow-x: auto;
+            white-space: pre-wrap; /* Ensures line breaks are preserved */
+            word-wrap: break-word;
+        }
+
+        /* Fixed input box */
+        .input-container {
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            background-color: #111827;
+            padding: 10px 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-top: 1px solid #374151;
+        }
+
+        /* Prompt textarea */
+        #prompt {
+            width: 50%;
+            height: 50px;
+            resize: none;
+            background-color: #374151;
+            color: white;
+            padding: 10px;
+            border: 1px solid #4b5563;
+            border-radius: 8px;
+            outline: none;
+        }
+
+        /* Send button */
+        .generate-button {
+            width: 50px;
+            height: 50px;
+            border-radius: 10px;
+            background-color: black;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            margin-left: 10px;
+        }
+
+        /* Copy button */
+        .copy-button {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            font-size: 12px;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: background-color 0.2s ease-in-out;
+        }
+
+        .copy-button:hover {
+            background-color: rgba(255, 255, 255, 0.4);
+        }
+
+        .copied {
+            background-color: green !important;
+        }
+    </style>
+</head>
+<body class="bg-black flex flex-col items-center justify-start h-screen pt-10">
+    <h1 class="text-xl font-bold mb-4 text-white">Coder'sHub Code</h1>
+
+    <div id="output-container"></div>
+
+    <div class="input-container">
+        <textarea id="prompt" placeholder="Enter your prompt..." onkeydown="handleKeyDown(event)"></textarea>
+        <div class="generate-button" onclick="generateCode()">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+            </svg>
+        </div>
+    </div>
+
+    <script>
+        async function generateCode() {
+            const prompt = document.getElementById("prompt").value;
+            if (!prompt) return;
+
+            const outputContainer = document.getElementById("output-container");
+
+            // Hide scrollbar while generating
+            outputContainer.classList.add("hidden-scrollbar");
+
+            // Clear input after submission
+            document.getElementById("prompt").value = "";
+
+            // Create a container for the prompt and response
+            const messageContainer = document.createElement("div");
+            messageContainer.classList.add("message-container");
+
+            // Create user prompt display
+            const userPromptElement = document.createElement("div");
+            userPromptElement.classList.add("text-white", "font-bold", "mb-2");
+            userPromptElement.innerText = `User: "${prompt}"`;
+            messageContainer.appendChild(userPromptElement);
+
+            // Create an output box
+            const outputElement = document.createElement("div");
+            outputElement.classList.add("message-box");
+
+            // Create code block
+            const codeBlock = document.createElement("pre");
+            const codeElement = document.createElement("code");
+            codeElement.classList.add("language-javascript"); // Adjust this for other languages
+            codeElement.innerText = "Generating...";
+            codeBlock.appendChild(codeElement);
+            outputElement.appendChild(codeBlock);
+            messageContainer.appendChild(outputElement);
+
+            // Create a copy button
+            const copyButton = document.createElement("button");
+            copyButton.classList.add("copy-button");
+            copyButton.innerText = "Copy";
+            copyButton.onclick = () => copyToClipboard(codeElement, copyButton);
+            outputElement.appendChild(copyButton);
+
+            // Append messages to the bottom (correct order)
+            outputContainer.appendChild(messageContainer);
+            outputContainer.scrollTop = outputContainer.scrollHeight;
+
+            try {
+                const response = await fetch("http://127.0.0.1:5000/generate", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ prompt })
+                });
+
+                const data = await response.json();
+
+                // Fix newlines and preserve formatting
+                const formattedCode = data.generated_code.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+                codeElement.innerText = formattedCode;
+
+                // Reapply syntax highlighting
+                Prism.highlightElement(codeElement);
+
+                outputElement.appendChild(copyButton); // Re-attach copy button after content updates
+            } catch (error) {
+                codeElement.innerText = "Failed to generate code.";
+            }
+
+            // Show scrollbar after generation completes
+            setTimeout(() => {
+                outputContainer.classList.remove("hidden-scrollbar");
+            }, 500);
+        }
+
+        function handleKeyDown(event) {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                generateCode();
+            }
+        }
+
+        function copyToClipboard(outputElement, copyButton) {
+            navigator.clipboard.writeText(outputElement.innerText)
+                .then(() => {
+                    copyButton.innerText = "Copied!";
+                    copyButton.classList.add("copied");
+                    setTimeout(() => {
+                        copyButton.innerText = "Copy";
+                        copyButton.classList.remove("copied");
+                    }, 1500);
+                })
+                .catch(() => {
+                    copyButton.innerText = "Failed";
+                });
+        }
+    </script>
+</body>
+</html>

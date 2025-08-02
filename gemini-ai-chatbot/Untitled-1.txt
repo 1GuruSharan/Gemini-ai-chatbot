@@ -1,0 +1,2 @@
+API_KEY = "AIzaSyAw52D82uPQ6QtB1la7N2G2eufrPv1WWxM"
+URL = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key={API_KEY}"

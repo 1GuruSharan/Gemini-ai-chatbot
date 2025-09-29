@@ -1,4 +1,4 @@
-# Gemini-ai-chatbot
+# Ai-Code Generator
 Chatbot using Gemini API to generate code and answer prompts.
 1.This is the Code Generator module of CodersHub, which generates frontend and backend code snippets based on user prompts. The system takes a user prompt and returns code suggestions for HTML, CSS, JavaScript, Python, etc. 
 

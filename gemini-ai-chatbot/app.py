@@ -5,7 +5,7 @@ import requests
 app = Flask(__name__)
 CORS(app)  # Enable CORS for frontend-backend communication
 
-API_KEY = "AIzaSyD_y7b-knG9NGvXepm3Kp8NerUuquOflW0"  # <- Replace with your valid key
+API_KEY = "Replace with your valid key"  
 URL = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={API_KEY}"
 
 @app.route("/generate", methods=["POST"])
